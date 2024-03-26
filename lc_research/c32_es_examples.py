@@ -1,4 +1,4 @@
-from c0_env_config_models import elastic_client,get_es_store_from_documents
+from c0_env_config_models import es_connection,es_vectorstore,get_es_store_from_documents,index_documents_to_es_vectorstore,index_name
 
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import CharacterTextSplitter
@@ -9,9 +9,9 @@ documents = loader.load()
 text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
 docs = text_splitter.split_documents(documents)
 
-
-elastic_client.indices.delete(
-    index="rag_index",
+# 方式一：常见的在教程中见到的
+es_connection.indices.delete(
+    index=index_name,
     ignore_unavailable=True,
     allow_no_indices=True,
 )
@@ -19,7 +19,7 @@ print('可在浏览器中查看Kibana: http://localhost:5601/app/enterprise_sear
 elastic_vector_search = get_es_store_from_documents(docs)
 # elastic_vector_search.add_documents(docs) 
 
-elastic_vector_search.client.indices.refresh(index="rag_index")
+elastic_vector_search.client.indices.refresh(index=index_name)
 query = "What did the president say about Ketanji Brown Jackson"
 # results = elastic_vector_search.similarity_search(query)
 results = elastic_vector_search.similarity_search_with_score(query) #scores are currently not supported in hybrid mode
@@ -28,3 +28,12 @@ for r in results:
     print('~~~~~'*10)
     print(f'Score:{r[1]}')
     print(r[0].page_content.replace('\n', ''))
+
+
+# 方式二，使用LangChain indexing API，防止重复插入
+# https://python.langchain.com/docs/modules/data_connection/indexing 
+
+print('====='*10)
+print('方式二，使用LangChain indexing API，防止重复插入')
+result = index_documents_to_es_vectorstore(documents = docs)
+print(f'Result report of "index_documents_to_es_vectorstore":{result}')
