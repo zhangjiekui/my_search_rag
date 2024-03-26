@@ -71,7 +71,8 @@ es_vectorstore = ElasticsearchStore(es_connection=es_connection, index_name=inde
 
 def _clear():
     """Hacky helper method to clear content. See the `full` mode section to to understand why it works."""
-    index([], record_manager, es_vectorstore, cleanup="full", source_id_key="source")
+    clear_result = index([], record_manager, es_vectorstore, cleanup="full", source_id_key="source")
+    print(f'Clear_Result report of "index_documents_to_es_vectorstore":{clear_result}')
 
 def index_documents_to_es_vectorstore(documents,cleanup="incremental",clear_before_add_index=False):
     if clear_before_add_index:
