@@ -1,4 +1,5 @@
-from c0_env_config_models import es_connection,es_vectorstore,get_es_store_from_documents,index_documents_to_es_vectorstore,index_name,chat_model,embeddings
+# from c0_env_config_models import es_connection,es_vectorstore,get_es_store_from_documents,index_documents_to_es_vectorstore,index_name,chat_model,embeddings
+from c0_env_config_models import *
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
