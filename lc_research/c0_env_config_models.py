@@ -33,12 +33,14 @@ embeddings = HuggingFaceEmbeddings(model_name=model_name,model_kwargs=model_kwar
 
 from elasticsearch import Elasticsearch
 from langchain_elasticsearch import ElasticsearchStore
+from langchain.indexes import SQLRecordManager, index
 llm = chat_model
 ELASTIC_PASSWORD='Is3Evsr9t-JZi9STRILV'
 CERT_FINGERPRINT='f3fdb3f509e00bf88fe45779426102abc1a1eb87bd5d3cefeed3cdc6b3845986'
 ES_URL ="https://localhost:9200"
+index_name="test_index"
 
-elastic_client = Elasticsearch(
+es_connection = Elasticsearch(
     ES_URL,
     # ca_certs=f"d:\JqkjKB\http_ca.crt",
     ssl_assert_fingerprint=CERT_FINGERPRINT,
@@ -47,26 +49,50 @@ elastic_client = Elasticsearch(
 )
 
 print(f'当前使用的Elasticsearch URL为{ES_URL},详细信息如下:')
-print('-------Elasticsearch详细信息-------')
-print(elastic_client.info())
-print('-------Elasticsearch详细信息-------')
+print('-------Elasticsearch Connection详细信息-------')
+print(es_connection.info())
+print('-------Elasticsearch Connection详细信息-------')
 
 
-def get_es_store_from_documents(documents, es_connection=elastic_client,index_name='rag_index',embedding=embeddings,strategy=ElasticsearchStore.ApproxRetrievalStrategy(hybrid=False)):
+
+
+# 方式一：常见的在教程中见到的
+def get_es_store_from_documents(documents, es_connection=es_connection,index_name=index_name,embedding=embeddings,strategy=ElasticsearchStore.ApproxRetrievalStrategy(hybrid=False)):
     elastic_vector_search = ElasticsearchStore.from_documents(documents=documents,es_connection=es_connection,index_name=index_name,embedding=embedding,strategy=strategy)
     return elastic_vector_search
+
+# 方式二，使用LangChain indexing API，防止重复插入
+# https://python.langchain.com/docs/modules/data_connection/indexing 
+
+namespace = f"elasticsearch/{index_name}"
+record_manager = SQLRecordManager(namespace, db_url="sqlite:///record_manager_cache.sql")
+record_manager.create_schema()
+es_vectorstore = ElasticsearchStore(es_connection=es_connection, index_name=index_name, embedding=embeddings)
+
+def _clear():
+    """Hacky helper method to clear content. See the `full` mode section to to understand why it works."""
+    index([], record_manager, es_vectorstore, cleanup="full", source_id_key="source")
+
+def index_documents_to_es_vectorstore(documents,cleanup="incremental",clear_before_add_index=False):
+    if clear_before_add_index:
+        _clear()
+
+    result=index(documents, record_manager, es_vectorstore, cleanup=cleanup, source_id_key="source")
+    return result
+
+
 
 
 # print(elastic_vector_search)
 
 
 if __name__ == '__main__':
-    # 直接使用OpenAI
-    # from openai import OpenAI
-    # client = OpenAI(base_url='http://10.1.150.105:9997/v1',api_key='EMPTY')
 
     print('******************'*5)
     print('下面是main函数中的输出：')
+    # 直接使用OpenAI
+    # from openai import OpenAI
+    # client = OpenAI(base_url='http://10.1.150.105:9997/v1',api_key='EMPTY')
 
     completion = client_openai.chat.completions.create(
       model="qwen1.5-chat",
