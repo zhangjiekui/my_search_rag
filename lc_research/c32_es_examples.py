@@ -9,6 +9,26 @@ documents = loader.load()
 text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
 docs = text_splitter.split_documents(documents)
 
+
+
+
+# 方式二，使用LangChain indexing API，防止重复插入
+# https://python.langchain.com/docs/modules/data_connection/indexing 
+# Do not use with a store that has been pre-populated with content independently of the indexing API, 
+# as the record manager will not know that records have been inserted previously.
+# 所以方式二与方式一不要混用，或者放到方式一前面
+
+print('====='*10)
+print('方式二，使用LangChain indexing API，防止重复插入。且方式二与方式一不要混用，或者放到方式一前面')
+result = index_documents_to_es_vectorstore(documents = docs)
+print(f'Result report of "index_documents_to_es_vectorstore":{result}')
+
+result = index_documents_to_es_vectorstore(documents = docs,clear_before_add_index=True)
+print(f'Result report of "index_documents_to_es_vectorstore":{result}')
+
+
+print('====='*10)
+print('方式一：常见的在教程中见到的')
 # 方式一：常见的在教程中见到的
 es_connection.indices.delete(
     index=index_name,
@@ -28,12 +48,3 @@ for r in results:
     print('~~~~~'*10)
     print(f'Score:{r[1]}')
     print(r[0].page_content.replace('\n', ''))
-
-
-# 方式二，使用LangChain indexing API，防止重复插入
-# https://python.langchain.com/docs/modules/data_connection/indexing 
-
-print('====='*10)
-print('方式二，使用LangChain indexing API，防止重复插入')
-result = index_documents_to_es_vectorstore(documents = docs)
-print(f'Result report of "index_documents_to_es_vectorstore":{result}')
