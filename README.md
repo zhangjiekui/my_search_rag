@@ -8,4 +8,5 @@ docker run \
 -v /home/jqsoft/.cache/modelscope:/root/.cache/modelscope \
 --gpus all xprobe/xinference:revised xinference-local -H 0.0.0.0 --log-level debug
 # 运行qwen1.5-chat
-CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 72 --n_gpu 4 --model-format gptq --quantization Int4  --gpu_memory_utilization 0.85 --tensor_parallel_size 4 --log-level debug
+（进入my_xinference容器中）
+CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 72 --n_gpu 4 --model-format gptq --quantization Int4  --gpu_memory_utilization 0.85 --tensor_parallel_size 4
