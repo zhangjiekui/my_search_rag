@@ -28,3 +28,10 @@ sudo kill -9 pid
 
 sudo pkill python #结束所有包含 "python" 的进程
 sudo kill $(pgrep python)
+
+## jupyter lab
+conda activate test
+
+jupyter lab --ip 0.0.0.0 --allow-root
+
+http://10.1.150.105:8889/lab
