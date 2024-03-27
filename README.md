@@ -17,3 +17,14 @@ docker run
 CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 72 --n_gpu 4 --model-format gptq --quantization Int4 --gpu_memory_utilization 0.85 --tensor_parallel_size 4
 
 ## 四、浏览器中打开 http://10.1.150.105:9997/ui/#/running_models
+
+
+## 端口和进程
+sudo ss -tulnp
+
+ps -ef 
+
+sudo kill -9 pid
+
+sudo pkill python #结束所有包含 "python" 的进程
+sudo kill $(pgrep python)
