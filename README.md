@@ -1,12 +1,19 @@
-# my_search_rag
-# 启动xinference
-docker run \
---shm-size=64g \
---name my_xinference -d -p 9997:9997 -e XINFERENCE_MODEL_SRC=modelscope \
--v /home/jqsoft/.xinference:/root/.xinference \
--v /home/jqsoft/.cache/huggingface:/root/.cache/huggingface \
--v /home/jqsoft/.cache/modelscope:/root/.cache/modelscope \
+## 一、通过VS CODE远程连接到连接到http://10.1.150.105/服务器
+
+## 二、启动xinference
+### 1、在vscode中，使用容器扩展工具启动xinference
+### 2、在命令行启动xinference（只需第一次）：
+docker run 
+--shm-size=64g
+--name my_xinference -d -p 9997:9997 -e XINFERENCE_MODEL_SRC=modelscope
+-v /home/jqsoft/.xinference:/root/.xinference
+-v /home/jqsoft/.cache/huggingface:/root/.cache/huggingface
+-v /home/jqsoft/.cache/modelscope:/root/.cache/modelscope
 --gpus all xprobe/xinference:revised xinference-local -H 0.0.0.0 --log-level debug
-# 运行qwen1.5-chat
-（进入my_xinference容器中）
-CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 72 --n_gpu 4 --model-format gptq --quantization Int4  --gpu_memory_utilization 0.85 --tensor_parallel_size 4
+
+## 三、运行qwen1.5-chat
+### 1、在vscode中，使用容器扩展工具，在运行状态的xinference容器上，附加vscode，进入my_xinference容器中
+### 2、在命令行运行以下命令：
+CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 72 --n_gpu 4 --model-format gptq --quantization Int4 --gpu_memory_utilization 0.85 --tensor_parallel_size 4
+
+## 四、浏览器中打开 http://10.1.150.105:9997/ui/#/running_models
