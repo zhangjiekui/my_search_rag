@@ -10,6 +10,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
+import jsonpatch
+
 template = """Answer the question based only on the following context:
 
 {context}
@@ -84,20 +86,35 @@ async def async_function_wrapper(question:str = "What did the president say abou
         else:
             pass
     
-    i=0
+    # i=0
+    json_doc={}
     async for chunk in chain.astream_log(question, include_names=include_names):
-        if i<10 or i%10==0:
-            print("-" * 40)
-            print(f"[{i}]:{chunk}")
-        i+=1
+        # https://python-json-patch.readthedocs.io/en/latest/tutorial.html
+        json_doc = jsonpatch.apply_patch(json_doc, chunk.ops)
+        # if i<10 or i%10==0:
+        #     print("-" * 40)
+        #     print(f"[{i}]:{chunk}")
+        # i+=1
+
+    return json_doc
 print('==================================')
 print('&&&&&&&&&&&&&&开始&&&&&&&&&&&&&&')
 
 import asyncio
-asyncio.run(async_function_wrapper())
+import json
+json_doc = asyncio.run(async_function_wrapper())
+
+# TypeError: Object of type Document is not JSON serializable
+# with open('log.json', 'w') as f:
+#     json.dump(json_doc, f, skipkeys=True)
+
+
+
 
 print('&&&&&&&&&&&&&&结束&&&&&&&&&&&&&&')
 print('==================================')
+
+print(json_doc)
 
 
 
