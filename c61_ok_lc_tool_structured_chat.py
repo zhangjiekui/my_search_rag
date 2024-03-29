@@ -8,8 +8,10 @@ import os
     ObservPython REPL can execute arbitrary code. Use with caution.
     Could not parse LLM output: 
 '''
-os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
+# os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
+# 先调用一次就ok了
 
+import json
 from typing import List
 
 from fastapi import FastAPI
@@ -93,16 +95,16 @@ input_tool = HumanInputRun(name='multi_line_humun_input',input_func=get_input)
 # 2.4  使用python_repl并包装成Agent工具
 from langchain_experimental.tools import PythonREPLTool
 python_repl = PythonREPLTool()
-python_repl.run("print(1+1)") #先运行一遍，看看后面是否不再输出警告信息: Python REPL can execute arbitrary code. Use with caution.
+print(python_repl.run("print(1+1)")) #先运行一遍，看看后面是否不再输出警告信息: Python REPL can execute arbitrary code. Use with caution.
 
 python_repl_tool = Tool(
     name="python_repl_tool",
     # from https://python.langchain.com/docs/integrations/toolkits/python
     description ="""You are an agent designed to write and execute python code to answer questions.
-                You have access to a python REPL, which you can use to execute python code.Input should be a valid python command.
-                If you want to see the output of a value, you should print it out with `print(...)`.
+                You have access to a python REPL, which you can use to execute python code.Input should be a valid python command, and Input of python code MUST in English.
+                To get the observation, you MUST `return ...` the value or print it out with `print(...)`.
                 If you get an error, debug your code and try again.
-                Only use the output of your code to answer the question. if output containing 'Python REPL can execute arbitrary code. Use with caution.',you MUST ignore/omit it, only using the content after that.
+                Only use the output of your code to answer the question.
                 You might know the answer without running any code, but you should still run the code to get the answer.
                 If it does not seem like you can write code to answer the question, just return "I don't know" as the answer.
                 """,
@@ -125,14 +127,14 @@ print(f'\n本次程序中提供的所有可用的工具列表:\n {tool_names}')
 
 prompt = hub.pull("hwchase17/structured-chat-agent")
 # 修改、丰富提示词
-prompt.messages[0].prompt.template = prompt.messages[0].prompt.template.replace("Use tools if necessary.", "Use tools or even ask for more specific information from user if necessary.")
+prompt.messages[0].prompt.template = prompt.messages[0].prompt.template.replace("Use tools if necessary.", "Use tools or even ask for more specific information from user if necessary. When using tools(`python_repl_tool`, `Calculator`),please run the code to get a value/obervation ")
 
 
 agent = create_structured_chat_agent(llm, tools, prompt)
 
 prompt.pretty_print()
 
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True,return_intermediate_steps=True)
 
 # 4. 执行Agent
 print('\n\n==============================执行Agent=======================================================')
@@ -152,12 +154,44 @@ querys = [
     "What's my friend Eric's surname?" 
 ]  
 
+querys = [
+    "你好",
+    "后天从合肥到上海的航班，如果你不知道后天的具体日期，请使用提供的工具来查询",
+    "帮我查询今天的日期",
+    "今天从合肥到上海的航班",
+    "2024年3月29日从合肥到上海的航班",
+    "what is langsmith and how can langsmith help with testing?",
+    "what did the president say about ketanji brown jackson in the most recent state of the union?",
+     "100的3倍等于多少?",
+     "'100的3倍等于多少'包含多少个字符?",
+    "What is the 10th fibonacci number?",
+    '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
+    "What's my friend Eric's surname?" 
+]  
+
+
+def print_nested_dict(nested_dict, indent=2):
+    for key, value in nested_dict.items():
+        if isinstance(value, dict):
+            print(' ' * indent + str(key) + ":")
+            print_nested_dict(value, indent+2)
+        else:
+            print(' ' * indent + str(key) + ": " + str(value))
+
+
 for query in querys:
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'*3)
     print(query)
-    result = agent_executor.invoke({"input": query})
-    print(result)
+    result = agent_executor.invoke({"input": query},include_run_info=True)
+    print_nested_dict(result)
+    
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'*3)
 
 
+# Could not parse LLM output
+    # C:\Users\zjk\.conda\envs\test\Lib\site-packages\langchain\agents\agent.py#L624
+    # C:\Users\zjk\.conda\envs\test\Lib\site-packages\langchain\agents\agent.py#L1165
+    
+# Invalid or incomplete response
+    # C:\Users\zjk\.conda\envs\test\Lib\site-packages\langchain\agents\agent.py#L1189  
 
