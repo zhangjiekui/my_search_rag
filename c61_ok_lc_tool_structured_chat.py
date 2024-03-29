@@ -65,7 +65,7 @@ retriever_tool2 = create_retriever_tool(
 from langchain.agents import tool,Tool
 @tool
 def get_flight_number(dep:str,des:str,date:str) -> str:
-    """根据输入的出发地(dep),目的地(des),日期(date),返回航班号，如果日期是不确定的描述，如明天、后天等，可以使用其他可能的工具（如'python_repl'、"llm-math"）进行查询，或调用"human"来请用户输入"""
+    """根据输入的出发地(dep),目的地(des),日期(date),返回航班号，如果日期是不确定的描述，如明天、后天等，可以使用其他可能的工具（如'python_repl'、"llm-math"）进行查询"""
     return ["MU584"]
 
 
@@ -73,6 +73,7 @@ def get_flight_number(dep:str,des:str,date:str) -> str:
 from langchain.agents import load_tools,get_all_tool_names
 from langchain_community.tools import HumanInputRun
 print('\nall_tool_names:\n',','.join(get_all_tool_names()))
+# loaded_tools = load_tools(["llm-math"],llm=llm)
 loaded_tools = load_tools(["human","llm-math"],llm=llm)
 
 def get_input() -> str:
@@ -102,7 +103,7 @@ python_repl_tool = Tool(
     # from https://python.langchain.com/docs/integrations/toolkits/python
     description ="""You are an agent designed to write and execute python code to answer questions.
                 You have access to a python REPL, which you can use to execute python code.Input should be a valid python command, and Input of python code MUST in English.
-                To get the observation, you MUST `return ...` the value or print it out with `print(...)`.
+                To  you want to see the output of a value and get the observation, you MUST print it out with `print(...)`.
                 If you get an error, debug your code and try again.
                 Only use the output of your code to answer the question.
                 You might know the answer without running any code, but you should still run the code to get the answer.
@@ -127,14 +128,18 @@ print(f'\n本次程序中提供的所有可用的工具列表:\n {tool_names}')
 
 prompt = hub.pull("hwchase17/structured-chat-agent")
 # 修改、丰富提示词
-prompt.messages[0].prompt.template = prompt.messages[0].prompt.template.replace("Use tools if necessary.", "Use tools or even ask for more specific information from user if necessary. When using tools(`python_repl_tool`, `Calculator`),please run the code to get a value/obervation ")
+prompt.messages[0].prompt.template = prompt.messages[0].prompt.template.replace("Use tools if necessary.", "Try to use tools first, or even ask for more specific information from user . When using python related tools(such `python_repl_tool`, `Calculator`), please really run/excute the code and print out the output value")
 
 
 agent = create_structured_chat_agent(llm, tools, prompt)
 
 prompt.pretty_print()
 
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True,return_intermediate_steps=True)
+def _handle_error(error) -> str:
+    return "Check your output and make sure it conforms, use the Action/Action Input syntax.If you using python code, DO NOT FORGET to print out the result!" + "This error message:" + str(error)
+
+# agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True,return_intermediate_steps=True)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=_handle_error,return_intermediate_steps=True)
 
 # 4. 执行Agent
 print('\n\n==============================执行Agent=======================================================')
@@ -175,6 +180,10 @@ def print_nested_dict(nested_dict, indent=2):
         if isinstance(value, dict):
             print(' ' * indent + str(key) + ":")
             print_nested_dict(value, indent+2)
+        elif isinstance(value, list):
+            print(' ' * indent + str(key) + f"(共{len(value)}步):")
+            for i,item in enumerate(value):                
+                print(f"{'-' * indent} ({i+1}): {item}")
         else:
             print(' ' * indent + str(key) + ": " + str(value))
 
