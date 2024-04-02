@@ -177,7 +177,7 @@ querys = [
      "'100的3倍等于多少'包含多少个字符?",
     "What is the 10th fibonacci number?",
     '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
-    "What's my friend Eric's surname?" 
+    f"What's my friend Eric's surname?可以调用工具Human向用户提问或请求更多信息，以得到正确答案" 
 ]  
 
 
