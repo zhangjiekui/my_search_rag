@@ -166,18 +166,18 @@ print('\n\n==============================执行Agent============================
 # ]  
 
 querys = [
-    # "请使用python print'输出你好，千问大模型'",
+    "请使用python print'输出你好，千问大模型'",
     '请查询和输出今天的日期',
     "请查询今天从合肥到上海的航班",
     "请查询后天从合肥到上海的航班",    
     "请查询2024年3月29日从合肥到上海的航班",
-    # "what is langsmith and how can langsmith help with testing?",
-    # "what did the president say about ketanji brown jackson in the most recent state of the union?",
-    #  "100的3倍等于多少?",
-    #  "'100的3倍等于多少'包含多少个字符?",
-    # "What is the 10th fibonacci number?",
-    # '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
-    # "What's my friend Eric's surname?" 
+    "what is langsmith and how can langsmith help with testing?",
+    "what did the president say about ketanji brown jackson in the most recent state of the union?",
+     "100的3倍等于多少?",
+     "'100的3倍等于多少'包含多少个字符?",
+    "What is the 10th fibonacci number?",
+    '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
+    "What's my friend Eric's surname?" 
 ]  
 
 
