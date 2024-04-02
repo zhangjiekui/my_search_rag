@@ -161,6 +161,9 @@ def parse_json_markdown(
 
     # Strip whitespace and newlines from the start and end
     json_str = json_str.strip().strip("`")
+    index_0 = json_str.find("{")
+    index_1 = json_str.rfind("}")
+    json_str = json_str[index_0:index_1+1]
 
     # handle newlines and other special characters inside the returned value
     json_str = _custom_parser(json_str)
