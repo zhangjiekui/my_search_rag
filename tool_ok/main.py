@@ -1,11 +1,15 @@
 # https://python.langchain.com/docs/modules/agents/agent_types/structured_chat
 #!/usr/bin/env python
+import warnings
+warnings.filterwarnings("ignore")
+import langchain
+langchain.debug = True
 
 import os
 # 为了忽略 Python REPL can execute arbitrary code. Use with caution.
 # 看看能否纠正下面的错误
 '''
-    ObservPython REPL can execute arbitrary code. Use with caution.
+    Python REPL can execute arbitrary code. Use with caution.
     Could not parse LLM output: 
 '''
 # os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
@@ -58,8 +62,9 @@ retriever_tool2 = create_retriever_tool(
 
 # 2.2  自定义工具
 from langchain.agents import tool,Tool
+from datetime import date
 @tool
-def get_flight_number(dep:str,des:str,date:str) -> str:
+def get_flight_number(dep:str,des:str,date:date) -> str:
     """根据输入的出发地(dep),目的地(des),日期(date),返回航班号，如果日期是不确定的描述，如明天、后天等，可以先使用工具'python_repl_tool'进行计算"""
     return [f"晶奇航空666[{date}]"]
 
@@ -69,7 +74,7 @@ from langchain.agents import load_tools,get_all_tool_names
 from langchain_community.tools import HumanInputRun
 print('\nall_tool_names:\n',','.join(get_all_tool_names()))
 # loaded_tools = load_tools(["llm-math"],llm=llm)
-loaded_tools = load_tools(["human","llm-math"],llm=llm)
+loaded_tools = load_tools(["human","llm-math","stackexchange"],llm=llm)
 
 def get_input() -> str:
     print("Insert your text. Enter 'q' or press Ctrl-D (or Ctrl-Z on Windows) to end.")
@@ -124,6 +129,20 @@ tool_names = ','.join([tool.name for tool in tools])
 print(f'\n本次程序中提供的所有可用的工具列表:\n {tool_names}')
 
 
+from langchain.memory import ConversationSummaryBufferMemory,ConversationBufferMemory
+
+# 放到这里使用
+# agent_executor = AgentExecutor(...,memory=memory)
+# https://github.com/ThreeRiversAINexus/sample-langchain-agents/blob/main/structured_chat.py
+memory = ConversationSummaryBufferMemory(
+    llm = llm, # 这里的llm的作用是总结
+    max_token_limit=4096,
+    memory_key="chat_history"
+)
+# memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True,input_key='output')
+memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+chat_history = memory.buffer_as_messages
+
 
 # 3. Create Agent/Agent_executor
 # prompt = hub.pull("hwchase17/openai-functions-agent") #qwen api无法成功运行
@@ -145,7 +164,11 @@ def _handle_error(error) -> str:
 
 # agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True,return_intermediate_steps=True)
 # agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True,return_intermediate_steps=True)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=_handle_error,return_intermediate_steps=True)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=_handle_error,
+                               return_intermediate_steps=False,#似乎与memory冲突
+                               memory=memory,
+                               max_iterations=10,
+                               )
 
 # 4. 执行Agent
 print('\n\n==============================执行Agent=======================================================')
@@ -166,18 +189,19 @@ print('\n\n==============================执行Agent============================
 # ]  
 
 querys = [
-    "请使用python print'输出你好，千问大模型'",
+    # "请使用python print'输出你好，千问大模型'",
     '请查询和输出今天的日期',
     "请查询今天从合肥到上海的航班",
-    "请查询后天从合肥到上海的航班",    
-    "请查询2024年3月29日从合肥到上海的航班",
-    "what is langsmith and how can langsmith help with testing?",
-    "what did the president say about ketanji brown jackson in the most recent state of the union?",
-     "100的3倍等于多少?",
-     "'100的3倍等于多少'包含多少个字符?",
-    "What is the 10th fibonacci number?",
-    '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
-    f"What's my friend Eric's surname?可以调用工具Human向用户提问或请求更多信息，以得到正确答案" 
+    # "请查询后天从合肥到上海的航班",    
+    # "请查询2024年3月29日从合肥到上海的航班",
+    # "what is langsmith and how can langsmith help with testing?",
+    # "what did the president say about ketanji brown jackson in the most recent state of the union?",
+    #  "100的3倍等于多少?",
+    #  "'100的3倍等于多少'包含多少个字符?",
+    # "What is the 10th fibonacci number?",
+    # '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
+    '请使用stackexchange工具检索和回答:What parts does a JUnit4 unit test case consist of?',
+    # f"What's my friend Eric's surname?可以调用工具Human向用户提问或请求更多信息，以得到正确答案" 
 ]  
 
 
@@ -197,7 +221,7 @@ def print_nested_dict(nested_dict, indent=2):
 for query in querys:
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'*3)
     print(query)
-    result = agent_executor.invoke({"input": query},include_run_info=True)
+    result = agent_executor.invoke({"input": query,"chat_history": chat_history},include_run_info=True)
     print_nested_dict(result)
     
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'*3)
