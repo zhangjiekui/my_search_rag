@@ -3,7 +3,7 @@
 import warnings
 warnings.filterwarnings("ignore")
 import langchain
-langchain.debug = True
+langchain.debug = False
 
 import os
 # 为了忽略 Python REPL can execute arbitrary code. Use with caution.
@@ -65,7 +65,7 @@ from langchain.agents import tool,Tool
 from datetime import date
 @tool
 def get_flight_number(dep:str,des:str,date:date) -> str:
-    """根据输入的出发地(dep),目的地(des),日期(date),返回航班号，如果日期是不确定的描述，如明天、后天等，可以先使用工具'python_repl_tool'进行计算"""
+    """根据输入的出发地(dep),目的地(des),日期(date),返回航班号。重要:日期(date)只接受python datetime.date类型输入，如果日期是不确定的描述，如明天、后天等，可以先使用工具'python_repl_tool'进行计算，并且返回python datetime.date类型结果，具体格式示例如下：2024-04-03。"""
     return [f"晶奇航空666[{date}]"]
 
 
@@ -189,19 +189,19 @@ print('\n\n==============================执行Agent============================
 # ]  
 
 querys = [
-    # "请使用python print'输出你好，千问大模型'",
+    "请记住：Use a json blob to specify a tool by providing an action key (tool name) and an action_input key (tool input).Provide only ONE action per $JSON_BLOB, as shown:\n\n```\n{\n  \"action\": $TOOL_NAME,\n  \"action_input\": $INPUT\n}\n```\n\nFollow this format:\n\nQuestion: input question to answer\nThought: consider previous and subsequent steps\nAction:\n```\n$JSON_BLOB\n```\nObservation: action result\n... (repeat Thought/Action/Observation N times)\nThought: I know what to respond\nAction:\n```\n{\n  \"action\": \"Final Answer\",\n  \"action_input\": \"Final response to human\"\n}\n\nBegin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools if necessary, or even ask for more specific information from user (please leave this as the last option) . Respond directly if appropriate. Format is Action:```$JSON_BLOB```then Observation\n",
     '请查询和输出今天的日期',
     "请查询今天从合肥到上海的航班",
-    # "请查询后天从合肥到上海的航班",    
-    # "请查询2024年3月29日从合肥到上海的航班",
-    # "what is langsmith and how can langsmith help with testing?",
-    # "what did the president say about ketanji brown jackson in the most recent state of the union?",
-    #  "100的3倍等于多少?",
-    #  "'100的3倍等于多少'包含多少个字符?",
-    # "What is the 10th fibonacci number?",
-    # '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
+    "请查询后天从合肥到上海的航班",    
+    "请查询2024年3月29日从合肥到上海的航班",
+    "what is langsmith and how can langsmith help with testing?",
+    "what did the president say about ketanji brown jackson in the most recent state of the union?",
+     "100的3倍等于多少?",
+     "'100的3倍等于多少'包含多少个字符?",
+    "What is the 10th fibonacci number?",
+    '帮我写一个python程序，计算1到100的和，并运行得到正确的结果',
     '请使用stackexchange工具检索和回答:What parts does a JUnit4 unit test case consist of?',
-    # f"What's my friend Eric's surname?可以调用工具Human向用户提问或请求更多信息，以得到正确答案" 
+    f"What's my friend Eric's surname?可以调用工具Human向用户提问或请求更多信息，以得到正确答案" 
 ]  
 
 
