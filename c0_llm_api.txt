@@ -25,6 +25,11 @@ docker run \
 2、在命令行运行以下命令：
 CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 72 --n_gpu 4 --model-format gptq --quantization Int4 --gpu_memory_utilization 0.85 --tensor_parallel_size 4
 
+qwen15 32B存放地址
+/home/jqsoft/.cache/modelscope/hub/qwen/Qwen1___5-32B
+
+
+
 四、浏览器中打开 http://10.1.150.105:9997/ui/#/running_models
 
 五、llama.cpp运行APUS-xDAN-4.0-MOE模型server api服务
@@ -32,3 +37,65 @@ cd ~/llama.cpp
 conda activate exl
 
 ./server -m /home/jqsoft/tabbyAPI/models/APUS-xDAN-4.0-MOE/APUS-xDAN4.0-MoE-0402.IQ3_XXS.gguf --chat-template chatml --ctx-size 4096 --host 0.0.0.0 --n-gpu-layers 61
+
+
+一、在文件中修改model默认路径和名称:/home/jqsoft/text-generation-webui/modules/shared.py
+
+group.add_argument('--model', default='qwen', type=str, help='Name of the model to load by default.')
+group.add_argument('--model-dir', type=str, default='/home/jqsoft/.xinference/cache/', help='Path to directory with all the models.')
+
+【这一步不需要，第三步它自己安装】
+二、创建conda环境
+#conda create -n webui python=3.11
+#conda activate webui
+自动安装的conda env
+conda activate /home/jqsoft/text-generation-webui/installer_files/env
+
+
+三、运行安装脚本 
+cd /home/jqsoft/text-generation-webui
+bash start_linux.sh
+
+ 如果安装出现终端
+ conda activate /home/jqsoft/text-generation-webui/installer_files/env
+ cd /home/jqsoft/text-generation-webui
+ pip install -r requirements.txt
+
+前面的安装方法如果不科学上网，速度极慢
+
+四、docker 
+【https://github.com/Atinoda/text-generation-webui-docker】
+【https://hub.docker.com/r/atinoda/text-generation-webui/tags】
+ docker pull atinoda/text-generation-webui:default-nvidia-nightly
+
+ docker compose up
+ docker compose down -v
+
+docker pull atinoda/text-generation-webui 
+
+docker run -it -e EXTRA_LAUNCH_ARGS="--listen --verbose" --gpus all -p 7860:7860 atinoda/text-generation-webui
+
+docker run -it -e EXTRA_LAUNCH_ARGS="--listen --verbose --trust-remote-code" --gpus all -v /home/jqsoft/.xinference/cache:/app/models -p 7860:7860 atinoda/text-generation-webui:default-nvidia-nightly
+
+docker run -it -e EXTRA_LAUNCH_ARGS="--listen --verbose --trust-remote-code" --gpus all -v /home/jqsoft/.cache/modelscope/hub/qwen:/app/models -p 7860:7860 atinoda/text-generation-webui
+
+五、下载extentions的模型
+huggingface-cli download --resume-download  coqui/XTTS-v2 --local-dir ~/.local/share/tts --local-dir-use-symlinks False
+#其中：--local-dir-use-symlinks False 参数禁用文件软链接，这样下载路径下所见即所得
+
+huggingface-cli download --resume-download  CohereForAI/c4ai-command-r-plus-4bit --local-dir /home/jqsoft/text-generation-webui/models --local-dir-use-symlinks False
+
+代码方式：
+import os
+os.environ['HF_ENDPOINT']='https://hf-mirror.com'
+from TTS.api import TTS
+tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
+
+
+最终使用
+105服务器
+
+cd ~/text-generation-webui
+bash start_linux.sh  
+
+
