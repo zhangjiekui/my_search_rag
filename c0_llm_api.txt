@@ -25,6 +25,7 @@ docker run \
 2、在命令行运行以下命令：
 CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 72 --n_gpu 4 --model-format gptq --quantization Int4 --gpu_memory_utilization 0.85 --tensor_parallel_size 4
 
+CUDA_VISIBLE_DEVICES=0,1,2,3 xinference launch --model-name qwen1.5-chat --size-in-billions 32 --n_gpu 4 --model-format pytroch --gpu_memory_utilization 0.85 --tensor_parallel_size 4
 qwen15 32B存放地址
 /home/jqsoft/.cache/modelscope/hub/qwen/Qwen1___5-32B
 
