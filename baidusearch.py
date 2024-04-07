@@ -274,6 +274,37 @@ def run():
 if __name__ == '__main__':
     # run()
     # https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&tn=baidu&wd=qwen1.5%EF%BC%9F&rn=20&oq=python-baidusearch&rsv_pq=f2ffdb4401b40423&rsv_t=42baKkO71EtT1xaRdfn5A0bDj2rSCFTMGTd84w%2BDwO60Y7OsbTuHhWYAnQI&rqlang=cn&rsv_enter=0&rsv_dl=tb&rsv_n=2&rsv_sug3=1&rsv_btype=t&inputT=1564&rsv_sug4=1564
-    res = search('qwen1.5？',debug=1)
+    res = search('大模型RAG开源项目',debug=1)
     print(len(res))
     # print(res)
+
+    from langchain_community.document_loaders import UnstructuredHTMLLoader
+    from langchain_community.document_loaders import BSHTMLLoader
+    from langchain_community.document_loaders import WebBaseLoader,NewsURLLoader, SeleniumURLLoader
+    
+    # https://python.langchain.com/docs/integrations/document_loaders/web_base/
+    # 应用到RAG中，可以将搜索到的Urls结果列表传递到Langchain框架中，得到Documents
+    urls = [item['url'] for item in res]
+    # https://www.comet.com/site/blog/langchain-document-loaders-for-web-data/
+    # https://api.python.langchain.com/en/latest/document_loaders/langchain_community.document_loaders.web_base.WebBaseLoader.html
+    
+    
+    loader1 = WebBaseLoader(urls,autoset_encoding=True,requests_kwargs ={'verify':False},verify_ssl=False,requests_per_second=1,continue_on_failure=True)
+    # To bypass SSL verification errors during fetching, you can set the “verify” option:
+
+
+    documents_WebBaseLoader = loader1.aload()
+
+    loader2 = SeleniumURLLoader(urls)
+    documents_SeleniumURLLoader = loader2.load() #没有实现aload
+
+
+    loader3 = NewsURLLoader(urls,text_mode=True,nlp=True,continue_on_failure=True)
+    documents_NewsURLLoader=loader3.load() #没有实现aload
+    
+    # 三者的比较，内容应该是NewsURLLoader比较适合RAG
+                #但SeleniumURLLoader似乎可以防屏蔽
+    # https://www.comet.com/site/blog/langchain-document-loaders-for-web-data/
+
+
+    pass
