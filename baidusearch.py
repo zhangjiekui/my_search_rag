@@ -6,7 +6,30 @@
 import sys
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
+def get_all_links(query,search_url= "https://www.baidu.com/s?ie=utf-8&tn=baidu&wd="):
+    url = search_url + query
+    print("百度搜索",url)
+    response = requests.get(url)
+    if response.status_code != 200:
+        print(f"Failed to retrieve the page: {url}")
+        return []
+
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # Finding all 'a' tags which typically contain href attribute for links
+    links = [
+        urljoin(url, a["href"]) for a in soup.find_all("a", href=True) if a["href"]
+    ]
+
+    return links
+
+urls = get_all_links("langchain")
+
+
+base_url = "https://docs.deeplake.ai/en/latest/"
+all_links = get_all_links('',base_url)
 
 ABSTRACT_MAX_LENGTH = 500    # abstract max length
 
@@ -63,7 +86,7 @@ def print_nested_dict(nested_dict, indent=2):
 
 # 实际上是直接获取百度搜索页的结果列表
 # https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&tn=baidu&wd=qwen1.5%EF%BC%9F&rn=20&oq=python-baidusearch&rsv_pq=f2ffdb4401b40423&rsv_t=42baKkO71EtT1xaRdfn5A0bDj2rSCFTMGTd84w%2BDwO60Y7OsbTuHhWYAnQI&rqlang=cn&rsv_enter=0&rsv_dl=tb&rsv_n=2&rsv_sug3=1&rsv_btype=t&inputT=1564&rsv_sug4=1564
-def search(keyword, num_results=10, debug=0):
+def search(keyword, num_results=10, debug=1):
     """
     通过关键字进行搜索
     :param keyword: 关键字
@@ -78,6 +101,7 @@ def search(keyword, num_results=10, debug=0):
 
     # 起始搜索的url
     next_url = baidu_search_url + keyword
+    
 
     # 循环遍历每一页的搜索结果，并返回下一页的url
     while len(list_result) < num_results:
@@ -274,13 +298,15 @@ def run():
 if __name__ == '__main__':
     # run()
     # https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&tn=baidu&wd=qwen1.5%EF%BC%9F&rn=20&oq=python-baidusearch&rsv_pq=f2ffdb4401b40423&rsv_t=42baKkO71EtT1xaRdfn5A0bDj2rSCFTMGTd84w%2BDwO60Y7OsbTuHhWYAnQI&rqlang=cn&rsv_enter=0&rsv_dl=tb&rsv_n=2&rsv_sug3=1&rsv_btype=t&inputT=1564&rsv_sug4=1564
-    res = search('大模型RAG开源项目',debug=1)
+    res = search('毛主席生平',debug=0)
     print(len(res))
     # print(res)
 
     from langchain_community.document_loaders import UnstructuredHTMLLoader
     from langchain_community.document_loaders import BSHTMLLoader
-    from langchain_community.document_loaders import WebBaseLoader,NewsURLLoader, SeleniumURLLoader
+    from langchain_community.document_loaders import WebBaseLoader,NewsURLLoader, SeleniumURLLoader,AsyncHtmlLoader
+    from langchain_community.document_transformers import Html2TextTransformer
+    html2text = Html2TextTransformer()
     
     # https://python.langchain.com/docs/integrations/document_loaders/web_base/
     # 应用到RAG中，可以将搜索到的Urls结果列表传递到Langchain框架中，得到Documents
@@ -292,19 +318,33 @@ if __name__ == '__main__':
     loader1 = WebBaseLoader(urls,autoset_encoding=True,requests_kwargs ={'verify':False},verify_ssl=False,requests_per_second=1,continue_on_failure=True)
     # To bypass SSL verification errors during fetching, you can set the “verify” option:
 
+    # 报错，会导致程序退出，不能用
+    loader4 = AsyncHtmlLoader(urls,autoset_encoding=True,requests_kwargs ={'verify':False},verify_ssl=False,requests_per_second=1,ignore_load_errors=False)
+    documents_AsyncHtmlLoader = loader4.load()
+    docs_transformed1 = html2text.transform_documents(documents_AsyncHtmlLoader)
 
     documents_WebBaseLoader = loader1.aload()
+    docs_transformed1 = html2text.transform_documents(documents_WebBaseLoader)
+
 
     loader2 = SeleniumURLLoader(urls)
     documents_SeleniumURLLoader = loader2.load() #没有实现aload
+    docs_transformed2 = html2text.transform_documents(documents_SeleniumURLLoader)
 
 
     loader3 = NewsURLLoader(urls,text_mode=True,nlp=True,continue_on_failure=True)
     documents_NewsURLLoader=loader3.load() #没有实现aload
+    docs_transformed3 = html2text.transform_documents(documents_NewsURLLoader)
     
     # 三者的比较，内容应该是NewsURLLoader比较适合RAG
                 #但SeleniumURLLoader似乎可以防屏蔽
     # https://www.comet.com/site/blog/langchain-document-loaders-for-web-data/
 
 
+    
+
+    
+    
+
+    
     pass
