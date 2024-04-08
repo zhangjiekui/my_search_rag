@@ -29,6 +29,10 @@ sudo kill -9 pid
 sudo pkill python #结束所有包含 "python" 的进程
 sudo kill $(pgrep python)
 
+## Win cmd命令行拷贝传输文件
+
+scp -r D:\Smaug-2-72B.i1-Q4_K_S.gguf jqsoft@10.1.150.105:/home/jqsoft/.xinference/cache
+
 ## jupyter lab
 conda activate test
 
