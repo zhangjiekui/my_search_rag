@@ -99,4 +99,17 @@ tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
 cd ~/text-generation-webui
 bash start_linux.sh  
 
+# llama-cpp-python完全支持OpenAI接口
+# https://github.com/abetlen/llama-cpp-python
+# 为支持function-calling需传入额外参数，见 https://llama-cpp-python.readthedocs.io/en/latest/server/#function-calling
+# 另外functionary requires a HF Tokenizer due to discrepancies between llama.cpp and HuggingFace's tokenizers as mentioned
+# 为顺利下载tokenizers： 
+     # nano ~/.bashrc 
+     # export HF_ENDPOINT=https://hf-mirror.co
+最终服务运行命令：
+
+python -m llama_cpp.server --host 0.0.0.0 --model /home/jqsoft/.xinference/cache/c4ai-command-r-v01-Q8_0.gguf --chat_format functionary-v2 --hf_pretrained_model_name_or_path CohereForAI/c4ai-command-r-v01
+ 
+# 使用测试示例：https://github.com/abetlen/llama-cpp-python/blob/main/examples/notebooks/Functions.ipynb
+
 
