@@ -264,7 +264,9 @@ if __name__ == '__main__':
     parser.add_argument('--model', '-m', type=str, default='mlx-community/c4ai-command-r-v01-4bit', help='Model name')
     parser.add_argument('--debug', '-d', action='store_true', default=True, help='Enable debug mode')
     args = parser.parse_args()
-    
+
+    # pip install mlx-lm. Source code: https://github.com/ml-explore/mlx-examples/tree/main/llms
+    # Using MLX at Hugging Face  https://huggingface.co/docs/hub/en/mlx
     model, tokenizer = load(args.model)
     
     app.run(port=args.port, debug=args.debug)
