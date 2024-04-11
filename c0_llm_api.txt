@@ -107,11 +107,14 @@ bash start_linux.sh
      # nano ~/.bashrc 
      # export HF_ENDPOINT=https://hf-mirror.co
 最终服务运行命令：
+# https://github.com/abetlen/llama-cpp-python#function-calling
+# This is possible through the functionary pre-trained models chat format or through the generic chatml-function-calling chat format
+# 但均失败，应该是CohereForAI/c4ai-command-r-v01 --chat_format模板还没有适配
+【失败】python -m llama_cpp.server --host 0.0.0.0 --port 9900 --n_gpu_layers -1 --model /home/jqsoft/.xinference/cache/c4ai-command-r-v01-Q8_0.gguf --chat_format chatml-function-calling --hf_pretrained_model_name_or_path CohereForAI/c4ai-command-r-v01
 
-python -m llama_cpp.server --host 0.0.0.0 --port 9990 --n_gpu_layers -1 --model /home/jqsoft/.xinference/cache/c4ai-command-r-v01-Q8_0.gguf --hf_pretrained_model_name_or_path CohereForAI/c4ai-command-r-v01
 
-
-python -m llama_cpp.server --host 0.0.0.0 --port 9995 --n_gpu_layers -1 --model /home/jqsoft/.xinference/cache/Smaug-2-72B.i1-Q4_K_M.gguf --hf_pretrained_model_name_or_path mradermacher/Smaug-2-72B-i1-GGUF
+[function call OK] python -m llama_cpp.server --host 0.0.0.0 --port 9989 --n_gpu_layers -1 --model /home/jqsoft/.xinference/cache/Smaug-2-72B.i1-Q4_K_M.gguf --chat_format chatml-function-calling
+[function call OK] python -m llama_cpp.server --host 0.0.0.0 --port 9900 --n_gpu_layers -1 --model /home/jqsoft/.xinference/cache/Smaug-2-72B.i1-Q4_K_S.gguf --chat_format chatml-function-calling
  
 # 使用测试示例：https://github.com/abetlen/llama-cpp-python/blob/main/examples/notebooks/Functions.ipynb
 
