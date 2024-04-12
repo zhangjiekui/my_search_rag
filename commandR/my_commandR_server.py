@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from typing import Optional,Callable,Union
 from flask import Flask, request, jsonify
 from flask.logging import create_logger
+import json
 
 model_id = "/home/jqsoft/.cache/modelscope/hub/AI-ModelScope/c4ai-command-r-v01"
 
@@ -247,7 +248,13 @@ def use_tool():
         
         response = generate(model, tokenizer, prompt=formatted_input,temperature=temperature,max_tokens=max_tokens, verbose=True)
 
-        return jsonify({"tool_response": response})
+        CHATBOT_REPLY_REPLY_SEPERATOR = "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"
+        chatbot_reply_content = response.split(CHATBOT_REPLY_REPLY_SEPERATOR)[-1]
+        if chatbot_reply_content.startswith('Action'):
+            tools_response = json.loads(chatbot_reply_content.split("```json")[1].split("```")[0])
+        else:
+            tools_response = []
+        return jsonify({"tool_response": tools_response})
     
     except KeyError as e:
         logger.error(f"Missing key in request JSON: {str(e)}")
