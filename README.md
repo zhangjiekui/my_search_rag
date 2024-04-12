@@ -3,13 +3,14 @@
 ## 二、启动xinference
 ### 1、在vscode中，使用容器扩展工具启动xinference
 ### 2、在命令行启动xinference（只需第一次）：
-docker run 
---shm-size=64g
---name my_xinference -d -p 9997:9997 -e XINFERENCE_MODEL_SRC=modelscope
--v /home/jqsoft/.xinference:/root/.xinference
--v /home/jqsoft/.cache/huggingface:/root/.cache/huggingface
--v /home/jqsoft/.cache/modelscope:/root/.cache/modelscope
---gpus all xprobe/xinference:revised xinference-local -H 0.0.0.0 --log-level debug
+原版/最新版是xinference 0.10.1 (2024-04-12)
+docker run \
+--shm-size=64g \
+--name xinference -d -p 9997:9997 -e XINFERENCE_MODEL_SRC=modelscope \
+-v /home/jqsoft/.xinference:/root/.xinference \
+-v /home/jqsoft/.cache/huggingface:/root/.cache/huggingface \
+-v /home/jqsoft/.cache/modelscope:/root/.cache/modelscope \
+--gpus all xprobe/xinference:latest xinference-local -H 0.0.0.0 --log-level debug
 
 ## 三、运行qwen1.5-chat
 ### 1、在vscode中，使用容器扩展工具，在运行状态的xinference容器上，附加vscode，进入my_xinference容器中
