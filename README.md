@@ -6,7 +6,7 @@
 原版/最新版是xinference 0.10.1 (2024-04-12)
 docker run \
 --shm-size=64g \
---name xinference -d -p 9997:9997 -e XINFERENCE_MODEL_SRC=modelscope \
+--name xinferencev101 -d -p 9997:9997 -e XINFERENCE_MODEL_SRC=modelscope \
 -v /home/jqsoft/.xinference:/root/.xinference \
 -v /home/jqsoft/.cache/huggingface:/root/.cache/huggingface \
 -v /home/jqsoft/.cache/modelscope:/root/.cache/modelscope \
