@@ -17,4 +17,16 @@ docker run -d \
 -e HF_HUB_ENABLE_HF_TRANSFER=1 \
 -e NUM_GPUS=4 \
 -e GPU_MEMORY_UTILIZATION=0.85 \
+-p 2242:7860 --gpus all --ipc host alpindale/aphrodite-engine
+
+
+sudo docker run -it --user root \
+--shm-size=64g \
+-v /home/jqsoft/.cache/modelscope/hub/AI-ModelScope/c4ai-command-r-v01:/tmp/hub/c4ai-command-r-v01 --privileged=true \
+-e MODEL_NAME=/tmp/hub/c4ai-command-r-v01 \
+-e HF_HUB_ENABLE_HF_TRANSFER=1 \
+-e NUM_GPUS=4 \
+-e GPU_MEMORY_UTILIZATION=0.95 \
+-e CONTEXT_LENGTH=4000 \
 -p 2242:7860 --gpus all --ipc host alpindale/aphrodite-engine \
+/bin/bash
