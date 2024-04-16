@@ -140,4 +140,7 @@ sudo docker run -it --user root \
 /bin/bash
 
 
+就可以访问:http://10.1.150.105:2242/docs
+
+
 
