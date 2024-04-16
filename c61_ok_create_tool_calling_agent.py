@@ -1,9 +1,11 @@
 # https://python.langchain.com/docs/modules/agents/quick_start/
 
+debug_info = False
+
 import warnings
 warnings.filterwarnings("ignore")
 import langchain
-langchain.debug = True  
+langchain.debug = debug_info  
 
 from lc_research.c0_env_config_models import chat_model,embeddings,es_vectorstore,index_documents_to_es_vectorstore,get_es_vectorstore_from_documents,api_base,api_key
 
@@ -68,7 +70,7 @@ def python_repl_tool_with_print(query:str) -> str:
                     else:
                         last_line_splits = line.split("#")
                         last_line = last_line_splits[0].strip()
-                        last_line = f'print({last_line})'+ '  #' +'#'.join(last_line_splits[1:])
+                        last_line = f'print({last_line})'+ '  ' +'#'.join(last_line_splits[1:])
 
                         lines[lines.index(line)] = last_line
                         _query = "\n".join(lines)
@@ -96,7 +98,7 @@ from langchain.agents import create_tool_calling_agent
 # 导入错误，当前conda env test的langchain版本较老，没有create_tool_calling_agent方法。切换到conda env lcnew使用更新的langchain版本
 print("\n### 可以正常使用create_tool_calling_agent方法的agent,并产生正确结果")
 agent = create_tool_calling_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True,return_intermediate_steps=True)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
 
 
 print('==='*10)
@@ -109,12 +111,15 @@ print(result)
 print('~~~'*10)
 result=agent_executor.invoke({"input": "请查询后天从合肥到上海的航班?"})
 print(result)
+print('~~~'*10)
+result=agent_executor.invoke({"input": "请计算26527*689的结果"})
+print(result)
 
 print("\n### 无法正常使用create_openai_functions_agent方法的agent,永远不会调用工具")
 # print('==='*10)
 # from langchain.agents import create_openai_functions_agent
 # agent = create_openai_functions_agent(llm, tools, prompt)
-# agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True,return_intermediate_steps=True)
+# agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
 # result=agent_executor.invoke({"input": "请调用工具langsmith_search,然后回答how can langsmith help with testing?"})
 # print(result)
 # print('~~~'*10)
