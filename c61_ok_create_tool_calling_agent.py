@@ -30,7 +30,7 @@ from langchain.tools.retriever import create_retriever_tool
 retriever_tool = create_retriever_tool(
     retriever,
     "langsmith_search",
-    "Search for information about LangSmith. For any query/questions about LangSmith, you must use this tool!\nIMPORTANT: Please quote the user's original query as the input.",
+    "Search for information about LangSmith. For any query/questions about LangSmith, you MUST use this tool!\nIMPORTANT: Please quote the user's original query as the input.",
 )
 print("这句话是新加的，否则LLM可能会重写/修改传递给的retriever的query参数内容：\nIMPORTANT: Please quote the user's original query as the input.")
 
@@ -41,28 +41,55 @@ def get_flight_number(dep:str,des:str,date:date) -> str:
     """根据输入的出发地(dep),目的地(des),日期(date),返回航班号。重要:日期(date)只接受python datetime.date类型输入，如果日期是不确定的描述，如明天、后天等，可以先使用工具'python_repl_tool'进行计算，并且返回python datetime.date类型结果，具体格式示例如下：2024-04-03。"""
     return f"晶奇航空666[{date}]"
 
-tools = [retriever_tool,get_flight_number]
+from langchain_experimental.tools import PythonREPLTool
+
+@tool
+def python_repl_tool_with_print(query:str) -> str: 
+    """
+    A Python shell. Use this to execute Input(query:str) python commands. And MUST print out the result value with `print(...)`.Examples:
+        `print(1+1)`;
+
+        `import datetime
+         print(datetime.datetime.today() + datetime.timedelta(days=2))
+        `    
+    """   
+    print('...调用执行Python_REPL......结果如下：')
+    python_repl = PythonREPLTool()
+
+    def _revise_query(query:str) -> str:
+        print(f"===原query:\n{query}")
+        lines = query.split("\n")
+        for line in lines[::-1]:
+            if len(line.strip())>0:
+                if not line.startswith('#'): #直接跳过注释行
+                    if line.startswith('print'):
+                        print(f"===已经有print了，就直接返回原query:\n{query}")
+                        return query #已经有print了，就直接返回原query
+                    else:
+                        last_line_splits = line.split("#")
+                        last_line = last_line_splits[0].strip()
+                        last_line = f'print({last_line})'+ '  #' +'#'.join(last_line_splits[1:])
+
+                        lines[lines.index(line)] = last_line
+                        _query = "\n".join(lines)
+
+                        print(f"===revised_query:\n{_query}")
+                        return _query
+    revised_query = _revise_query(query)
+    result = python_repl.run(revised_query)
+    return result
+
+
+
+
+tools = [retriever_tool,get_flight_number,python_repl_tool_with_print]
 
 from langchain import hub
 
 # Get the prompt to use - you can modify this!
-prompt = hub.pull("hwchase17/openai-functions-agent")
-
-# prompt = hub.pull("homanp/superagent")
+prompt = hub.pull("hwchase17/openai-tools-agent")
 prompt.pretty_print()
 
-# from langchain_core.prompts import ChatPromptTemplate
-# prompt = ChatPromptTemplate.from_messages(
-#     [
-#         (
-#             "system",
-#             "You are a helpful assistant. Make sure to use the one of [get_flight_number,langsmith_search] tools for flight information.",
-#         ),
-#         ("placeholder", "{chat_history}"),
-#         ("human", "{input}"),
-#         ("placeholder", "{agent_scratchpad}"),
-#     ]
-# )
 
 from langchain.agents import AgentExecutor
 from langchain.agents import create_tool_calling_agent
@@ -78,6 +105,9 @@ result=agent_executor.invoke({"input": "请调用工具langsmith_search,然后�
 print(result)
 print('~~~'*10)
 result=agent_executor.invoke({"input": "请查询2024-4-16日从合肥到上海的航班?"})
+print(result)
+print('~~~'*10)
+result=agent_executor.invoke({"input": "请查询后天从合肥到上海的航班?"})
 print(result)
 
 print("\n### 无法正常使用create_openai_functions_agent方法的agent,永远不会调用工具")
