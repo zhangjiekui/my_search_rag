@@ -1,6 +1,6 @@
 # https://python.langchain.com/docs/modules/agents/quick_start/
 
-debug_info = True
+debug_info = False
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -48,11 +48,15 @@ from langchain_experimental.tools import PythonREPLTool
 @tool
 def python_repl_tool_with_print(query:str) -> str: 
     """
-    A Python shell. Use this to execute Input(query:str) python commands. And MUST print out the result value with `print(...)`.Examples:
-        `print(1+1)`;
-
-        `import datetime
+    A Python shell. Use this to execute Input(query:str) python commands. Output(value:str):you MUST using `print($value)` to print out at least one value, or multiple values as needed to better answer/solve the user's problem.For examples:
+        `# print out at least one value: MUST.
+         import datetime
          print(datetime.datetime.today() + datetime.timedelta(days=2))
+
+        `# print out multiple values: AS NEEDED. 
+         print(1+1)
+         print(298*3)
+         print(8-1) 
         `    
     """   
     print('...调用执行Python_REPL......结果如下：')
@@ -156,4 +160,6 @@ print('==='*10)
 all_result2=all_agent_executor.invoke({"input":"What's 23 times 7, and what's five times 18 and add a million plus a billion and cube thirty-seven"})
 print(all_result2)
 print('~~~'*10)
+
+
 
