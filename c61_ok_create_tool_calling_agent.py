@@ -1,6 +1,6 @@
 # https://python.langchain.com/docs/modules/agents/quick_start/
 
-debug_info = False
+debug_info = True
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -65,7 +65,7 @@ def python_repl_tool_with_print(query:str) -> str:
             if len(line.strip())>0:
                 if not line.startswith('#'): #直接跳过注释行
                     if line.startswith('print'):
-                        print(f"===已经有print了，就直接返回原query:\n{query}")
+                        print(f"===已经有print了，直接返回原query:\n{query}")
                         return query #已经有print了，就直接返回原query
                     else:
                         last_line_splits = line.split("#")
@@ -96,13 +96,15 @@ prompt.pretty_print()
 from langchain.agents import AgentExecutor
 from langchain.agents import create_tool_calling_agent
 # 导入错误，当前conda env test的langchain版本较老，没有create_tool_calling_agent方法。切换到conda env lcnew使用更新的langchain版本
-print("\n### 可以正常使用create_tool_calling_agent方法的agent,并产生正确结果")
+print("\n### create_tool_calling_agent是Langchain(v0.1.16)最新推出的统一的ToolAgent接口！可以正常使用,并产生正确结果")
 agent = create_tool_calling_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
 
 
 print('==='*10)
-agent_executor.invoke({"input": "hi!"})
+result=agent_executor.invoke({"input": "hi!"})
+print(result)
+print('~~~'*10)
 result=agent_executor.invoke({"input": "请调用工具langsmith_search,然后回答：what's langsmith? how can langsmith help with testing?"})
 print(result)
 print('~~~'*10)
@@ -115,14 +117,43 @@ print('~~~'*10)
 result=agent_executor.invoke({"input": "请计算26527*689的结果"})
 print(result)
 
-print("\n### 无法正常使用create_openai_functions_agent方法的agent,永远不会调用工具")
-# print('==='*10)
-# from langchain.agents import create_openai_functions_agent
-# agent = create_openai_functions_agent(llm, tools, prompt)
-# agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
-# result=agent_executor.invoke({"input": "请调用工具langsmith_search,然后回答how can langsmith help with testing?"})
-# print(result)
-# print('~~~'*10)
-# result=agent_executor.invoke({"input": "请查询2024-4-16日从合肥到上海的航班?"})
-# print(result)
-# pass
+print("\n### 使用Agent挑战Parallel tool use：https://python.langchain.com/docs/use_cases/tool_use/parallel/ ")
+print("\n###1、 直接使用Python_Repl工具Agent挑战Parallel tool use")
+print('==='*10)
+result3=agent_executor.invoke({"input":"What's 23 times 7, and what's five times 18 and add a million plus a billion and cube thirty-seven"})
+print(result3)
+print('~~~'*10)
+
+print("\n###2、 新定义三个Tools，挑战Parallel tool use")
+@tool
+def multiply(first_int: int, second_int: int) -> int:
+    """Multiply two integers together."""
+    return first_int * second_int
+
+@tool
+def add(first_int: int, second_int: int) -> int:
+    "Add two integers."
+    return first_int + second_int
+
+@tool
+def exponentiate(base: int, exponent: int) -> int:
+    "Exponentiate the base to the exponent power."
+    return base**exponent
+
+tools2 = [multiply, add, exponentiate]
+agent2 = create_tool_calling_agent(llm, tools2, prompt)
+agent_executor2 = AgentExecutor(agent=agent2, tools=tools2, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
+print('==='*10)
+result2=agent_executor2.invoke({"input":"What's 23 times 7, and what's five times 18 and add a million plus a billion and cube thirty-seven"})
+print(result2)
+print('~~~'*10)
+
+print("\n###3、 所有Tooks放到一起，挑战Parallel tool use")
+all_tools =tools+tools2
+all_agent = create_tool_calling_agent(llm, all_tools, prompt)
+all_agent_executor = AgentExecutor(agent=all_agent, tools=all_tools, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
+print('==='*10)
+all_result2=all_agent_executor.invoke({"input":"What's 23 times 7, and what's five times 18 and add a million plus a billion and cube thirty-seven"})
+print(all_result2)
+print('~~~'*10)
+
