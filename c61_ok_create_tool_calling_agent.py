@@ -74,8 +74,7 @@ def python_repl_tool_with_print(query:str) -> str:
                     else:
                         last_line_splits = line.split("#")
                         last_line = last_line_splits[0].strip()
-                        last_line = f'print({last_line})'+ '  ' +'#'.join(last_line_splits[1:])
-
+                        last_line = f'print({last_line})'
                         lines[lines.index(line)] = last_line
                         _query = "\n".join(lines)
 
