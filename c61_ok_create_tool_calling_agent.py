@@ -13,6 +13,16 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_transformers import Html2TextTransformer
+from langchain_core.tools import ToolException
+from langchain.agents import tool,Tool
+from typing import List
+from datetime import date
+from langchain.tools.retriever import create_retriever_tool
+from langchain_experimental.tools import PythonREPLTool
+from langchain.agents import AgentExecutor
+from langchain.agents import create_tool_calling_agent
+from langchain import hub
+
 html2text = Html2TextTransformer()
 
 llm=chat_model
@@ -28,7 +38,7 @@ results = index_documents_to_es_vectorstore(documents,index_name=index_name,clea
 print(f"Add indices['{index_name}'] result:{results}")
 
 retriever = es_vectorstore.as_retriever()
-from langchain.tools.retriever import create_retriever_tool
+
 retriever_tool = create_retriever_tool(
     retriever,
     "langsmith_search",
@@ -36,14 +46,12 @@ retriever_tool = create_retriever_tool(
 )
 print("这句话是新加的，否则LLM可能会重写/修改传递给的retriever的query参数内容：\nIMPORTANT: Please quote the user's original query as the input.")
 
-from langchain.agents import tool,Tool
-from datetime import date
+
 @tool
 def get_flight_number(dep:str,des:str,date:date) -> str:
     """根据输入的出发地(dep),目的地(des),日期(date),返回航班号。重要:日期(date)只接受python datetime.date类型输入，如果日期是不确定的描述，如明天、后天等，可以先使用工具'python_repl_tool'进行计算，并且返回python datetime.date类型结果，具体格式示例如下：2024-04-03。"""
     return f"晶奇航空666[{date}]"
 
-from langchain_experimental.tools import PythonREPLTool
 
 @tool
 def python_repl_tool_with_print(query:str) -> str: 
@@ -58,10 +66,11 @@ def python_repl_tool_with_print(query:str) -> str:
          print(298*3)
          print(8-1) 
         `    
-    """   
-    print('...调用执行Python_REPL......结果如下：')
-    python_repl = PythonREPLTool()
+    """
 
+    python_repl = PythonREPLTool()
+    print('...调用执行Python_REPL...过程如下：')
+    print('......检查是否有print......：')
     def _revise_query(query:str) -> str:
         print(f"===原query:\n{query}")
         lines = query.split("\n")
@@ -80,24 +89,42 @@ def python_repl_tool_with_print(query:str) -> str:
 
                         print(f"===revised_query:\n{_query}")
                         return _query
-    revised_query = _revise_query(query)
-    result = python_repl.run(revised_query)
-    return result
+    try:
+        revised_query = _revise_query(query)
+        result = python_repl.run(revised_query)
+        # result = python_repl.run(query) # 用做ToolException测试，不使用revised_query
+        if result:            
+            print(f"===执行结果:\n{result}")
+            return result
+        else:
+            raise ToolException(f"No observation was found. Maybe you should add `print($value)` in you python code?")
+    except Exception as e:
+        message = query if query else "query is empty"
+        raise ToolException(f"The `python_repl_tool_with_print tool` failed.The python commands was: \n{message}. \nthe exception was: {e}")
 
+print("\n###增加了ToolException处理函数_handle_error function")
+def _handle_error(error: ToolException) -> str:
+    return (
+        "The following errors occurred during tool execution:"
+        + error.args[0]
+        + "Please regerate the input args for the current tool, or try another tool."
+    )
 
+def _bind_handle_error(tools: List[Tool]) -> None:
+    for tool in tools:
+        tool.handle_tool_error = _handle_error
 
 
 tools = [retriever_tool,get_flight_number,python_repl_tool_with_print]
+_bind_handle_error(tools)
 
-from langchain import hub
 
 # Get the prompt to use - you can modify this!
 prompt = hub.pull("hwchase17/openai-tools-agent")
 prompt.pretty_print()
 
 
-from langchain.agents import AgentExecutor
-from langchain.agents import create_tool_calling_agent
+
 # 导入错误，当前conda env test的langchain版本较老，没有create_tool_calling_agent方法。切换到conda env lcnew使用更新的langchain版本
 print("\n### create_tool_calling_agent是Langchain(v0.1.16)最新推出的统一的ToolAgent接口！可以正常使用,并产生正确结果")
 agent = create_tool_calling_agent(llm, tools, prompt)
@@ -144,6 +171,7 @@ def exponentiate(base: int, exponent: int) -> int:
     return base**exponent
 
 tools2 = [multiply, add, exponentiate]
+_bind_handle_error(tools2)
 agent2 = create_tool_calling_agent(llm, tools2, prompt)
 agent_executor2 = AgentExecutor(agent=agent2, tools=tools2, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
 print('==='*10)
@@ -159,6 +187,15 @@ print('==='*10)
 all_result2=all_agent_executor.invoke({"input":"What's 23 times 7, and what's five times 18 and add a million plus a billion and cube thirty-seven"})
 print(all_result2)
 print('~~~'*10)
+
+
+
+all_agent_executor_with_handle_error_function = AgentExecutor(agent=all_agent, tools=all_tools, verbose=debug_info, handle_parsing_errors=True,return_intermediate_steps=debug_info)
+print('==='*10)
+all_result4=all_agent_executor_with_handle_error_function.invoke({"input":"What's 23 times 7, and what's five times 18 and add a million plus a billion and cube thirty-seven"})
+print(all_result4)
+print('~~~'*10)
+
 
 
 
