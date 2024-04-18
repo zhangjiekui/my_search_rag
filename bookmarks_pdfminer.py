@@ -163,6 +163,9 @@ if __name__ == "__main__":
 # Bookmarks[考虑用页码顺序、字体（names and sizes）过滤一些非标题书签，如自己建的快捷导航或关注重点]
     # https://pdfminersix.readthedocs.io/en/latest/howto/character_properties.html 字体
     # https://pdfminersix.readthedocs.io/en/latest/howto/toc_target_page.html      页码
+# 正则is_title(line)、is_possible_title
+    is_title(line)：https://blog.csdn.net/socct_yj/article/details/135348666
+    is_possible_title：https://github.com/chatchat-space/Langchain-Chatchat/blob/52f2a2a04608435e9ea52516f09ba7e7132f706a/text_splitter/zh_title_enhance.py#L30
 
 # 结合大模型：https://blog.csdn.net/star1210644725/article/details/136318768
 
