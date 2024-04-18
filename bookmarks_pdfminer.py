@@ -159,8 +159,8 @@ if __name__ == "__main__":
 
 
 # Office Word
-# TABLE OF CONTENTS
-# Bookmarks[考虑用页码顺序、字体（names and sizes）过滤一些非标题书签，如自己建的快捷导航或关注重点]
+# PyMuPDF获取toc：TABLE OF CONTENTS
+# PyMuPDF获取书签：Bookmarks[考虑用页码顺序、字体（names and sizes）过滤一些非标题书签，如自己建的快捷导航或关注重点]
     # https://pdfminersix.readthedocs.io/en/latest/howto/character_properties.html 字体
     # https://pdfminersix.readthedocs.io/en/latest/howto/toc_target_page.html      页码
 # 正则is_title(line)、is_possible_title
